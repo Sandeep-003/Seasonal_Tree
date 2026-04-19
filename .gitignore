@@ -3,7 +3,7 @@
 /build-web/
 /build-*/
 /cmake-build-*/
-/dist/
+/dist/index.html
 
 # CMake and compiler caches
 *.obj
