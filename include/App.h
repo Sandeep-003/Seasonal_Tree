@@ -34,6 +34,9 @@ class SeasonalTreeApp {
 
   std::vector<BranchSegment> branches_;
   std::vector<LeafNode> leaves_;
+
+  int lastScreenWidth_ = -1;
+  int lastScreenHeight_ = -1;
 };
 
 }  // namespace seasonal_tree

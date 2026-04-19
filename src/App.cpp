@@ -61,6 +61,14 @@ void SeasonalTreeApp::Run() {
 }
 
 void SeasonalTreeApp::ProcessFrame() {
+  const int currentWidth = GetScreenWidth();
+  const int currentHeight = GetScreenHeight();
+  if (currentWidth != lastScreenWidth_ || currentHeight != lastScreenHeight_) {
+    lastScreenWidth_ = currentWidth;
+    lastScreenHeight_ = currentHeight;
+    RegenerateTree();
+  }
+
   bool screenshotRequested = false;
   const bool changed = controls_.HandleInput(params_, screenshotRequested);
 
