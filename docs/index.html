@@ -371,6 +371,9 @@
       canvas: (function () {
         return document.getElementById('canvas');
       })(),
+      webglContextAttributes: {
+        preserveDrawingBuffer: true
+      },
       locateFile: function (path) {
         if (path.endsWith('.wasm')) {
           return window.__wasmBasePath + 'seasonal_tree_raylib.wasm';
@@ -586,19 +589,25 @@
     }
 
     function saveCanvasImage() {
-      if (isRuntimeReady()) {
-        callWasm('st_saveScreenshot', [], []);
-      }
       const canvas = document.getElementById('canvas');
-      try {
-        const url = canvas.toDataURL('image/png');
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'seasonal_tree_canvas.png';
-        a.click();
-      } catch (e) {
-        console.error(e);
-      }
+
+      const download = () => {
+        try {
+          const url = canvas.toDataURL('image/png');
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `seasonal_tree_${Date.now()}.png`;
+          a.click();
+        } catch (e) {
+          console.error(e);
+          setStatus('Failed to export PNG from canvas.', false);
+        }
+      };
+
+      // Wait for a fresh rendered frame before reading WebGL pixels.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(download);
+      });
     }
 
     function scrollToGuide() {
