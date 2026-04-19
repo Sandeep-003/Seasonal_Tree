@@ -61,8 +61,8 @@ void SeasonalTreeApp::Run() {
 }
 
 void SeasonalTreeApp::ProcessFrame() {
-  const int currentWidth = GetScreenWidth();
-  const int currentHeight = GetScreenHeight();
+  const int currentWidth = GetRenderWidth();
+  const int currentHeight = GetRenderHeight();
   if (currentWidth != lastScreenWidth_ || currentHeight != lastScreenHeight_) {
     lastScreenWidth_ = currentWidth;
     lastScreenHeight_ = currentHeight;
@@ -83,10 +83,10 @@ void SeasonalTreeApp::ProcessFrame() {
 }
 
 void SeasonalTreeApp::RegenerateTree() {
-  // Re-anchor at runtime window center so web deployments with different canvas widths
-  // still render the trunk in the visual center.
-  params_.root = {static_cast<float>(GetScreenWidth()) / 2.0f,
-                  static_cast<float>(GetScreenHeight()) - 40.0f};
+  // Re-anchor at runtime render center so web deployments stay centered on the
+  // actual canvas framebuffer (not browser window size).
+  params_.root = {static_cast<float>(GetRenderWidth()) / 2.0f,
+                  static_cast<float>(GetRenderHeight()) - 40.0f};
   generator_.Generate(params_, branches_, leaves_);
 }
 

@@ -178,7 +178,7 @@
       overflow: hidden;
       border: 1px solid var(--line);
       background: #f6f2e8;
-      min-height: 540px;
+      min-height: clamp(280px, 62vh, 620px);
       display: grid;
       place-items: center;
       position: relative;
@@ -340,7 +340,7 @@
           <span id="statusDot" class="dot"></span>
           <span id="statusText">Loading WebAssembly runtime...</span>
         </div>
-        <div class="status">Canvas: 1280 x 720</div>
+        <div class="status" id="canvasSizeText">Canvas: -- x --</div>
       </div>
 
       <div class="stage">
@@ -356,6 +356,7 @@
     const loadingEl = document.getElementById('loading');
     const statusDot = document.getElementById('statusDot');
     const statusText = document.getElementById('statusText');
+    const canvasSizeText = document.getElementById('canvasSizeText');
     window.__wasmBasePath = '';
 
     function setStatus(text, ready) {
@@ -389,10 +390,40 @@
       },
       onRuntimeInitialized: function () {
         setStatus('Ready. Use keyboard controls to grow the tree.', true);
+        syncCanvasSize();
         const canvas = document.getElementById('canvas');
         canvas.focus();
       }
     };
+
+    function getCanvasTargetSize() {
+      const stage = document.querySelector('.stage');
+      const stageWidth = Math.max(320, Math.floor(stage.clientWidth - 2));
+      const maxHeight = Math.max(260, Math.floor(window.innerHeight * 0.70));
+
+      let width = stageWidth;
+      let height = Math.floor((width * 9) / 16);
+
+      if (height > maxHeight) {
+        height = maxHeight;
+        width = Math.floor((height * 16) / 9);
+      }
+
+      return { width, height };
+    }
+
+    function syncCanvasSize() {
+      const canvas = document.getElementById('canvas');
+      const { width, height } = getCanvasTargetSize();
+
+      canvas.style.width = `${width}px`;
+      canvas.style.height = `${height}px`;
+      canvasSizeText.textContent = `Canvas: ${width} x ${height}`;
+
+      if (typeof Module !== 'undefined' && typeof Module.setCanvasSize === 'function') {
+        Module.setCanvasSize(width, height, true);
+      }
+    }
 
     async function runtimeFileExists(url) {
       try {
@@ -536,6 +567,19 @@
       guide.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
+    let resizeTimer = null;
+    window.addEventListener('resize', () => {
+      if (resizeTimer !== null) {
+        clearTimeout(resizeTimer);
+      }
+      resizeTimer = setTimeout(syncCanvasSize, 80);
+    });
+
+    window.addEventListener('orientationchange', () => {
+      setTimeout(syncCanvasSize, 120);
+    });
+
+    syncCanvasSize();
     loadEmscriptenRuntime();
   </script>
 </body>
