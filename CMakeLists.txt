@@ -11,6 +11,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 include(FetchContent)
 set(RAYLIB_VERSION 5.0)
 
+if (EMSCRIPTEN)
+  # Raylib expects this cache variable for web builds.
+  set(PLATFORM Web CACHE STRING "" FORCE)
+endif()
+
 find_package(raylib ${RAYLIB_VERSION} QUIET)
 if (NOT raylib_FOUND)
   FetchContent_Declare(
@@ -32,6 +37,18 @@ add_executable(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME} PRIVATE include)
 target_link_libraries(${PROJECT_NAME} PRIVATE raylib)
 
-if (WIN32)
+if (EMSCRIPTEN)
+  # Generate .html launcher plus .js/.wasm for browser execution.
+  set_target_properties(${PROJECT_NAME} PROPERTIES SUFFIX ".html")
+  target_link_options(${PROJECT_NAME} PRIVATE
+    "-sUSE_GLFW=3"
+    "-sMAX_WEBGL_VERSION=2"
+    "-sMIN_WEBGL_VERSION=2"
+    "-sALLOW_MEMORY_GROWTH=1"
+    "-sASSERTIONS=1"
+    "-sEXPORTED_FUNCTIONS=['_main','_st_adjustBranchLength','_st_adjustBranchAngle','_st_adjustScaleFactor','_st_adjustMinBranchLength','_st_setSeason','_st_resetTree','_st_saveScreenshot']"
+    "-sEXPORTED_RUNTIME_METHODS=['ccall','cwrap']"
+  )
+elseif (WIN32)
   target_link_libraries(${PROJECT_NAME} PRIVATE winmm)
 endif()

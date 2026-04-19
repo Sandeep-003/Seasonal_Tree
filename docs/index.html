@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seasonal Tree - WebAssembly</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f6f2e8;
+      --panel: #fffaf4;
+      --ink: #2a2119;
+      --muted: #6e6357;
+      --line: #cbbca8;
+      --accent: #3d7c47;
+      --accent-2: #bc6c25;
+      --shadow: rgba(42, 33, 25, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Space Grotesk", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 700px at -5% -5%, #fff7ea 0%, transparent 55%),
+        radial-gradient(900px 550px at 105% 0%, #e9f5ea 0%, transparent 55%),
+        var(--bg);
+      min-height: 100vh;
+    }
+
+    .layout {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 330px 1fr;
+      gap: 20px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: 0 14px 30px var(--shadow);
+    }
+
+    .sidebar {
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-self: start;
+      position: sticky;
+      top: 20px;
+    }
+
+    .title {
+      margin: 0;
+      font-size: 1.8rem;
+      line-height: 1.1;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.55;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .chip {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.76rem;
+      padding: 4px 9px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+    }
+
+    .legend {
+      margin: 0;
+      padding-left: 16px;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 0.93rem;
+    }
+
+    .legend strong {
+      color: var(--ink);
+      font-family: "IBM Plex Mono", monospace;
+      font-weight: 500;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--ink);
+      transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      border-color: #b8aa98;
+      box-shadow: 0 8px 18px var(--shadow);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #5ea06a);
+      border-color: transparent;
+      color: #fff;
+    }
+
+    .btn-warm {
+      background: linear-gradient(135deg, var(--accent-2), #d68a47);
+      border-color: transparent;
+      color: #fff;
+    }
+
+    .main {
+      padding: 16px;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin: 6px 6px 14px;
+    }
+
+    .status {
+      font-family: "IBM Plex Mono", monospace;
+      font-size: 0.82rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 99px;
+      background: #d3c6b5;
+      transition: background 150ms ease;
+    }
+
+    .dot.ready {
+      background: #56a564;
+    }
+
+    .stage {
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: #f6f2e8;
+      min-height: 540px;
+      display: grid;
+      place-items: center;
+      position: relative;
+    }
+
+    #canvas {
+      width: 100%;
+      height: auto;
+      display: block;
+      outline: none;
+      background: #f6f2e8;
+    }
+
+    .control-group {
+      display: grid;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .control-row {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .control-row span {
+      color: var(--muted);
+      font-size: 0.84rem;
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    .mini {
+      padding: 7px 10px;
+      border-radius: 10px;
+      min-width: 34px;
+      line-height: 1;
+      font-family: "IBM Plex Mono", monospace;
+    }
+
+    .season-grid {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .season-btn.active {
+      border-color: transparent;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent), #5ea06a);
+    }
+
+    .loading {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(255, 250, 242, 0.88);
+      font-weight: 600;
+      color: var(--muted);
+      backdrop-filter: blur(2px);
+      transition: opacity 200ms ease;
+    }
+
+    .loading.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .footer {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 0.85rem;
+      text-align: right;
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+      }
+
+      .main {
+        padding: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="panel sidebar">
+      <div>
+        <h1 class="title">Seasonal Tree</h1>
+        <p class="subtitle">A recursive tree simulation in C++/raylib compiled to WebAssembly. Use the keyboard to shape growth, branching, and seasonal palettes.</p>
+        <div class="chip-row">
+          <span class="chip">WASM</span>
+          <span class="chip">raylib</span>
+          <span class="chip">C++17</span>
+        </div>
+      </div>
+
+      <div>
+        <p class="subtitle" style="margin-bottom:8px;"><strong>Controls</strong></p>
+        <ul class="legend">
+          <li><strong>Q / A</strong> branch length</li>
+          <li><strong>W / S</strong> split angle</li>
+          <li><strong>E / D</strong> scale factor</li>
+          <li><strong>R / F</strong> minimum branch length</li>
+          <li><strong>1 / 2 / 3 / 4</strong> season</li>
+          <li><strong>P</strong> save screenshot (engine)</li>
+        </ul>
+      </div>
+
+      <div class="actions">
+        <button class="btn-primary" onclick="resetTree()">Reset Tree</button>
+        <button onclick="toggleFullscreen()">Fullscreen</button>
+        <button class="btn-warm" onclick="saveCanvasImage()">Save PNG</button>
+        <button onclick="scrollToGuide()">Guide</button>
+      </div>
+
+      <div class="control-group">
+        <div class="control-row">
+          <span>Branch Length</span>
+          <button class="mini" onclick="adjustBranchLength(-4)">-</button>
+          <button class="mini" onclick="adjustBranchLength(4)">+</button>
+        </div>
+        <div class="control-row">
+          <span>Branch Angle</span>
+          <button class="mini" onclick="adjustBranchAngle(-1)">-</button>
+          <button class="mini" onclick="adjustBranchAngle(1)">+</button>
+        </div>
+        <div class="control-row">
+          <span>Scale Factor</span>
+          <button class="mini" onclick="adjustScaleFactor(-0.02)">-</button>
+          <button class="mini" onclick="adjustScaleFactor(0.02)">+</button>
+        </div>
+        <div class="control-row">
+          <span>Min Branch Len</span>
+          <button class="mini" onclick="adjustMinBranchLength(-1)">-</button>
+          <button class="mini" onclick="adjustMinBranchLength(1)">+</button>
+        </div>
+      </div>
+
+      <div class="season-grid">
+        <button id="season-0" class="season-btn" onclick="setSeason(0)">Spring</button>
+        <button id="season-1" class="season-btn active" onclick="setSeason(1)">Summer</button>
+        <button id="season-2" class="season-btn" onclick="setSeason(2)">Autumn</button>
+        <button id="season-3" class="season-btn" onclick="setSeason(3)">Winter</button>
+      </div>
+    </aside>
+
+    <section class="panel main">
+      <div class="toolbar">
+        <div class="status">
+          <span id="statusDot" class="dot"></span>
+          <span id="statusText">Loading WebAssembly runtime...</span>
+        </div>
+        <div class="status">Canvas: 1280 x 720</div>
+      </div>
+
+      <div class="stage">
+        <canvas id="canvas" class="emscripten" oncontextmenu="event.preventDefault()" tabindex="0"></canvas>
+        <div id="loading" class="loading">Compiling and loading... please wait</div>
+      </div>
+
+      <p id="guide" class="footer">Tip: click inside canvas once, then use keyboard controls for immediate response.</p>
+    </section>
+  </div>
+
+  <script>
+    const loadingEl = document.getElementById('loading');
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    window.__wasmBasePath = '';
+
+    function setStatus(text, ready) {
+      statusText.textContent = text;
+      statusDot.classList.toggle('ready', !!ready);
+      if (ready) {
+        loadingEl.classList.add('hidden');
+      }
+    }
+
+    var Module = {
+      canvas: (function () {
+        return document.getElementById('canvas');
+      })(),
+      locateFile: function (path) {
+        if (path.endsWith('.wasm')) {
+          return window.__wasmBasePath + 'seasonal_tree_raylib.wasm';
+        }
+        return window.__wasmBasePath + path;
+      },
+      print: function (text) {
+        console.log(text);
+      },
+      printErr: function (text) {
+        console.error(text);
+      },
+      setStatus: function (text) {
+        if (typeof text === 'string' && text.length > 0) {
+          setStatus(text, false);
+        }
+      },
+      onRuntimeInitialized: function () {
+        setStatus('Ready. Use keyboard controls to grow the tree.', true);
+        const canvas = document.getElementById('canvas');
+        canvas.focus();
+      }
+    };
+
+    async function runtimeFileExists(url) {
+      try {
+        const response = await fetch(url, { method: 'GET', cache: 'no-store' });
+        return response.ok;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    async function loadEmscriptenRuntime() {
+      const runningFromDocs = window.location.pathname.includes('/docs/');
+      const candidates = runningFromDocs
+        ? [
+            { js: '../build-web/seasonal_tree_raylib.js', base: '../build-web/' },
+            { js: 'seasonal_tree_raylib.js', base: '' }
+          ]
+        : [
+            { js: 'seasonal_tree_raylib.js', base: '' },
+            { js: '../build-web/seasonal_tree_raylib.js', base: '../build-web/' }
+          ];
+
+      for (const candidate of candidates) {
+        const found = await runtimeFileExists(candidate.js);
+        if (!found) {
+          continue;
+        }
+
+        const script = document.createElement('script');
+        script.src = candidate.js;
+        script.async = true;
+
+        // Must be set before script execution, since Emscripten resolves wasm during boot.
+        window.__wasmBasePath = candidate.base;
+        Module.mainScriptUrlOrBlob = candidate.js;
+
+        script.onload = function () {
+          // Normalize base path using the actual resolved script URL.
+          const resolvedJsUrl = script.src;
+          const slashIndex = resolvedJsUrl.lastIndexOf('/');
+          if (slashIndex >= 0) {
+            window.__wasmBasePath = resolvedJsUrl.slice(0, slashIndex + 1);
+          }
+          setStatus('Runtime loaded. Initializing WebAssembly...', false);
+        };
+
+        script.onerror = function () {
+          setStatus('Runtime script failed to execute.', false);
+        };
+
+        document.body.appendChild(script);
+        return;
+      }
+
+      setStatus('Runtime files not found. Build WASM and copy JS/WASM next to this page.', false);
+    }
+
+    function reloadTree() {
+      window.location.reload();
+    }
+
+    function isRuntimeReady() {
+      return typeof Module !== 'undefined' && typeof Module.ccall === 'function';
+    }
+
+    function callWasm(name, types, args) {
+      if (!isRuntimeReady()) {
+        setStatus('Runtime not ready yet.', false);
+        return false;
+      }
+      try {
+        Module.ccall(name, null, types, args);
+        return true;
+      } catch (err) {
+        console.error(err);
+        setStatus('Failed to call WASM control.', false);
+        return false;
+      }
+    }
+
+    function adjustBranchLength(delta) {
+      callWasm('st_adjustBranchLength', ['number'], [delta]);
+    }
+
+    function adjustBranchAngle(delta) {
+      callWasm('st_adjustBranchAngle', ['number'], [delta]);
+    }
+
+    function adjustScaleFactor(delta) {
+      callWasm('st_adjustScaleFactor', ['number'], [delta]);
+    }
+
+    function adjustMinBranchLength(delta) {
+      callWasm('st_adjustMinBranchLength', ['number'], [delta]);
+    }
+
+    function setSeason(index) {
+      if (callWasm('st_setSeason', ['number'], [index])) {
+        for (let i = 0; i < 4; i += 1) {
+          const btn = document.getElementById(`season-${i}`);
+          if (btn) {
+            btn.classList.toggle('active', i === index);
+          }
+        }
+      }
+    }
+
+    function resetTree() {
+      if (callWasm('st_resetTree', [], [])) {
+        setSeason(1);
+      }
+    }
+
+    function toggleFullscreen() {
+      const el = document.getElementById('canvas');
+      if (!document.fullscreenElement) {
+        el.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen();
+      }
+    }
+
+    function saveCanvasImage() {
+      if (isRuntimeReady()) {
+        callWasm('st_saveScreenshot', [], []);
+      }
+      const canvas = document.getElementById('canvas');
+      try {
+        const url = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'seasonal_tree_canvas.png';
+        a.click();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function scrollToGuide() {
+      const guide = document.getElementById('guide');
+      guide.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    loadEmscriptenRuntime();
+  </script>
+</body>
+</html>

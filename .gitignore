@@ -1,1 +1,27 @@
-build/*
+# Build outputs
+/build/
+/build-web/
+/build-*/
+/cmake-build-*/
+/dist/
+
+# CMake and compiler caches
+*.obj
+*.o
+*.pdb
+*.ilk
+*.lib
+*.a
+*.exp
+
+# Emscripten/browser build leftovers
+*.wasm.map
+
+# IDE/editor temp files
+.vscode/*.code-workspace
+*.tmp
+*.log
+
+# OS files
+Thumbs.db
+.DS_Store

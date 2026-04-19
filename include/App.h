@@ -14,7 +14,16 @@ class SeasonalTreeApp {
   SeasonalTreeApp();
   void Run();
 
+  void AdjustBranchLength(float delta);
+  void AdjustBranchAngle(float delta);
+  void AdjustScaleFactor(float delta);
+  void AdjustMinBranchLength(float delta);
+  void SetSeason(int seasonIndex);
+  void ResetTree();
+  void CaptureScreenshot();
+
  private:
+    void ProcessFrame();
   void RegenerateTree();
   void SaveScreenshot() const;
 
