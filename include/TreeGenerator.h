@@ -27,6 +27,8 @@ class TreeGenerator {
                          std::vector<LeafNode>& outLeaves);
 
   Color GetLeafColor(Season season);
+    Color GetLeafAccentColor(Season season);
+    float RandomRange(float minValue, float maxValue);
 };
 
 }  // namespace seasonal_tree

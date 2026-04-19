@@ -47,8 +47,11 @@ struct BranchSegment {
 
 struct LeafNode {
   Vector2 center{};
-  float radius = 3.0f;
+  float width = 4.0f;
+  float height = 7.0f;
+  float rotationDegrees = 0.0f;
   Color color = GREEN;
+  Color accentColor = LIME;
 };
 
 }  // namespace seasonal_tree
