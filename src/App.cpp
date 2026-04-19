@@ -36,6 +36,7 @@ SeasonalTreeApp::SeasonalTreeApp() {
 }
 
 void SeasonalTreeApp::Run() {
+  SetConfigFlags(FLAG_MSAA_4X_HINT);
   InitWindow(config::kScreenWidth, config::kScreenHeight, config::kWindowTitle);
   SetTargetFPS(60);
 

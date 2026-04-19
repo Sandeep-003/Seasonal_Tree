@@ -418,19 +418,22 @@
     function syncCanvasSize() {
       const canvas = document.getElementById('canvas');
       const { width, height } = getCanvasTargetSize();
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      const renderWidth = Math.max(1, Math.floor(width * dpr));
+      const renderHeight = Math.max(1, Math.floor(height * dpr));
 
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
       // Keep a hard fallback for environments where Module.setCanvasSize is unavailable.
-      canvas.width = width;
-      canvas.height = height;
-      canvasSizeText.textContent = `Canvas: ${width} x ${height}`;
+      canvas.width = renderWidth;
+      canvas.height = renderHeight;
+      canvasSizeText.textContent = `Canvas: ${width} x ${height} (${renderWidth} x ${renderHeight} render)`;
 
       try {
         const setCanvasSizeFn = Module && Module.setCanvasSize;
         if (typeof setCanvasSizeFn === 'function') {
           // Use normal resize updates so GL viewport/framebuffer stay in sync.
-          setCanvasSizeFn(width, height);
+          setCanvasSizeFn(renderWidth, renderHeight);
         }
       } catch (_) {
         // Keep canvas.width/canvas.height fallback.
