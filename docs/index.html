@@ -390,7 +390,7 @@
       },
       onRuntimeInitialized: function () {
         setStatus('Ready. Use keyboard controls to grow the tree.', true);
-        syncCanvasSize();
+        scheduleCanvasResyncPasses();
         const canvas = document.getElementById('canvas');
         canvas.focus();
       }
@@ -423,10 +423,45 @@
       canvas.height = height;
       canvasSizeText.textContent = `Canvas: ${width} x ${height}`;
 
-      if (typeof Module !== 'undefined' && typeof Module.setCanvasSize === 'function') {
-        // Use normal resize updates so GL viewport/framebuffer stay in sync.
-        Module.setCanvasSize(width, height);
+      try {
+        const setCanvasSizeFn = Module && Module.setCanvasSize;
+        if (typeof setCanvasSizeFn === 'function') {
+          // Use normal resize updates so GL viewport/framebuffer stay in sync.
+          setCanvasSizeFn(width, height);
+        }
+      } catch (_) {
+        // Keep canvas.width/canvas.height fallback.
       }
+    }
+
+    function scheduleCanvasResyncPasses() {
+      // Ensure resize is applied after runtime init and after layout settles.
+      syncCanvasSize();
+      requestAnimationFrame(() => {
+        syncCanvasSize();
+        requestAnimationFrame(syncCanvasSize);
+      });
+      setTimeout(syncCanvasSize, 120);
+      setTimeout(syncCanvasSize, 360);
+      setTimeout(syncCanvasSize, 900);
+    }
+
+    function installStageResizeObserver() {
+      if (typeof ResizeObserver === 'undefined') {
+        return;
+      }
+      const stage = document.querySelector('.stage');
+      if (!stage) {
+        return;
+      }
+
+      const observer = new ResizeObserver(() => {
+        if (resizeTimer !== null) {
+          clearTimeout(resizeTimer);
+        }
+        resizeTimer = setTimeout(syncCanvasSize, 60);
+      });
+      observer.observe(stage);
     }
 
     async function runtimeFileExists(url) {
@@ -583,7 +618,12 @@
       setTimeout(syncCanvasSize, 120);
     });
 
-    syncCanvasSize();
+    window.addEventListener('load', () => {
+      scheduleCanvasResyncPasses();
+    });
+
+    installStageResizeObserver();
+    scheduleCanvasResyncPasses();
     loadEmscriptenRuntime();
   </script>
 </body>
