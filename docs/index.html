@@ -418,10 +418,14 @@
 
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
+      // Keep a hard fallback for environments where Module.setCanvasSize is unavailable.
+      canvas.width = width;
+      canvas.height = height;
       canvasSizeText.textContent = `Canvas: ${width} x ${height}`;
 
       if (typeof Module !== 'undefined' && typeof Module.setCanvasSize === 'function') {
-        Module.setCanvasSize(width, height, true);
+        // Use normal resize updates so GL viewport/framebuffer stay in sync.
+        Module.setCanvasSize(width, height);
       }
     }
 

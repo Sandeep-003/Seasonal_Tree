@@ -47,7 +47,7 @@ if (EMSCRIPTEN)
     "-sALLOW_MEMORY_GROWTH=1"
     "-sASSERTIONS=1"
     "-sEXPORTED_FUNCTIONS=['_main','_st_adjustBranchLength','_st_adjustBranchAngle','_st_adjustScaleFactor','_st_adjustMinBranchLength','_st_setSeason','_st_resetTree','_st_saveScreenshot']"
-    "-sEXPORTED_RUNTIME_METHODS=['ccall','cwrap']"
+    "-sEXPORTED_RUNTIME_METHODS=['ccall','cwrap','setCanvasSize']"
   )
 elseif (WIN32)
   target_link_libraries(${PROJECT_NAME} PRIVATE winmm)
