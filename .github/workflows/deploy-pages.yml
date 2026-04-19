@@ -34,10 +34,10 @@ jobs:
 
       - name: Prepare Pages artifact
         run: |
-          mkdir -p dist
-          cp -r docs/. dist/
-          cp build-web/seasonal_tree_raylib.js dist/
-          cp build-web/seasonal_tree_raylib.wasm dist/
+          mkdir -p site
+          cp -r docs/. site/
+          cp build-web/seasonal_tree_raylib.js site/
+          cp build-web/seasonal_tree_raylib.wasm site/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -45,7 +45,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: site
 
   deploy:
     environment:

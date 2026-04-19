@@ -75,6 +75,10 @@ void SeasonalTreeApp::ProcessFrame() {
 }
 
 void SeasonalTreeApp::RegenerateTree() {
+  // Re-anchor at runtime window center so web deployments with different canvas widths
+  // still render the trunk in the visual center.
+  params_.root = {static_cast<float>(GetScreenWidth()) / 2.0f,
+                  static_cast<float>(GetScreenHeight()) - 40.0f};
   generator_.Generate(params_, branches_, leaves_);
 }
 
